@@ -98,6 +98,7 @@ export interface WeeklyPlan {
   id: string;
   weekLabel: string; // e.g. "2026-W22"
   slots: MealSlot[];
+  notes?: string;
   createdAt: string;
 }
 

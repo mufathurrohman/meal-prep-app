@@ -38,6 +38,7 @@ export default function MealPlanPage() {
 
       if (p) {
         setPlan(p);
+        setWeekNote(p.notes || "");
       } else {
         const newPlan: WeeklyPlan = {
           id: generateId(),
@@ -46,6 +47,7 @@ export default function MealPlanPage() {
           createdAt: new Date().toISOString(),
         };
         setPlan(newPlan);
+        setWeekNote("");
       }
       setLoaded(true);
     },
@@ -55,6 +57,17 @@ export default function MealPlanPage() {
   useEffect(() => {
     loadPlan(weekLabel);
   }, [weekLabel, loadPlan]);
+
+  useEffect(() => {
+    if (!plan) return;
+    const t = setTimeout(async () => {
+      const updated = { ...plan, notes: weekNote || undefined };
+      setPlan(updated);
+      await storage.saveWeeklyPlan(updated);
+    }, 800);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekNote]);
 
   function goToPrevWeek() {
     setWeekLabel(shiftWeek(weekLabel, -1));

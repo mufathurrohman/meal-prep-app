@@ -53,6 +53,7 @@ function planRowToPlan(row: any, slotRows: any[]): WeeklyPlan {
   return {
     id: row.id,
     weekLabel: row.week_label,
+    notes: row.week_note || undefined,
     slots: slotRows.map((s) => ({
       id: s.id,
       day: s.day,
@@ -188,6 +189,7 @@ export class SupabaseProvider implements StorageProvider {
     await this.db.from("weekly_plans").insert({
       id: plan.id,
       week_label: plan.weekLabel,
+      week_note: plan.notes || null,
       created_at: plan.createdAt,
     });
 
