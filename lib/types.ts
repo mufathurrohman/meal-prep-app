@@ -76,7 +76,7 @@ export interface Recipe {
 // Weekly Plan & Scheduling
 // ──────────────────────────────────────────
 
-export type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday";
+export type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday";
 
 export type MealSlotType =
   | "breakfast"

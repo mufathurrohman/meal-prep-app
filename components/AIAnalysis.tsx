@@ -34,7 +34,10 @@ export function AIAnalysis({ recipe, suggestions, onApprove, onReject }: AIAnaly
         }),
       });
 
-      if (!response.ok) throw new Error("Analysis request failed");
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `Request failed with status ${response.status}`);
+      }
 
       const data = await response.json();
 
@@ -52,8 +55,8 @@ export function AIAnalysis({ recipe, suggestions, onApprove, onReject }: AIAnaly
 
       setResults((prev) => [...newSuggestions, ...prev]);
       setPrompt("");
-    } catch {
-      setError("Failed to analyze. Make sure your AI provider is configured in .env.local");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to analyze. Check your AI provider configuration in .env.local");
     } finally {
       setLoading(false);
     }

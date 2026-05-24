@@ -9,7 +9,7 @@ const now = new Date().toISOString();
 
 export const SEED_RECIPES: Recipe[] = [
   {
-    id: "seed-chicken-stirfry",
+    id: "a1000000-0000-0000-0000-000000000001",
     name: "Garlic Chicken Stir-Fry",
     category: "main",
     currentVersion: {
@@ -75,7 +75,7 @@ export const SEED_RECIPES: Recipe[] = [
     updatedAt: now,
   },
   {
-    id: "seed-pasta-bolognese",
+    id: "a1000000-0000-0000-0000-000000000002",
     name: "Turkey Bolognese Pasta",
     category: "main",
     currentVersion: {
@@ -114,7 +114,7 @@ export const SEED_RECIPES: Recipe[] = [
     updatedAt: now,
   },
   {
-    id: "seed-lentil-soup",
+    id: "a1000000-0000-0000-0000-000000000003",
     name: "Red Lentil & Sweet Potato Soup",
     category: "main",
     currentVersion: {
@@ -152,7 +152,7 @@ export const SEED_RECIPES: Recipe[] = [
     updatedAt: now,
   },
   {
-    id: "seed-overnight-oats",
+    id: "a1000000-0000-0000-0000-000000000004",
     name: "Peanut Butter Overnight Oats",
     category: "main",
     currentVersion: {
@@ -183,7 +183,7 @@ export const SEED_RECIPES: Recipe[] = [
     updatedAt: now,
   },
   {
-    id: "seed-trail-mix",
+    id: "a1000000-0000-0000-0000-000000000005",
     name: "Homemade Trail Mix",
     category: "snack",
     currentVersion: {
@@ -213,7 +213,7 @@ export const SEED_RECIPES: Recipe[] = [
     updatedAt: now,
   },
   {
-    id: "seed-energy-balls",
+    id: "a1000000-0000-0000-0000-000000000006",
     name: "Date & Oat Energy Balls",
     category: "snack",
     currentVersion: {
@@ -248,37 +248,37 @@ export function createSeededWeeklyPlan(): WeeklyPlan {
 
   const assignments: Record<string, Record<string, string>> = {
     monday: {
-      breakfast: "seed-overnight-oats",
-      "morning-snack": "seed-trail-mix",
-      lunch: "seed-chicken-stirfry",
-      "afternoon-snack": "seed-energy-balls",
-      dinner: "seed-lentil-soup",
+      breakfast: "a1000000-0000-0000-0000-000000000004",
+      "morning-snack": "a1000000-0000-0000-0000-000000000005",
+      lunch: "a1000000-0000-0000-0000-000000000001",
+      "afternoon-snack": "a1000000-0000-0000-0000-000000000006",
+      dinner: "a1000000-0000-0000-0000-000000000003",
     },
     tuesday: {
-      breakfast: "seed-overnight-oats",
-      lunch: "seed-pasta-bolognese",
-      "afternoon-snack": "seed-trail-mix",
-      dinner: "seed-chicken-stirfry",
+      breakfast: "a1000000-0000-0000-0000-000000000004",
+      lunch: "a1000000-0000-0000-0000-000000000002",
+      "afternoon-snack": "a1000000-0000-0000-0000-000000000005",
+      dinner: "a1000000-0000-0000-0000-000000000001",
     },
     wednesday: {
-      breakfast: "seed-overnight-oats",
-      "morning-snack": "seed-energy-balls",
-      lunch: "seed-lentil-soup",
-      dinner: "seed-pasta-bolognese",
-      "evening-snack": "seed-trail-mix",
+      breakfast: "a1000000-0000-0000-0000-000000000004",
+      "morning-snack": "a1000000-0000-0000-0000-000000000006",
+      lunch: "a1000000-0000-0000-0000-000000000003",
+      dinner: "a1000000-0000-0000-0000-000000000002",
+      "evening-snack": "a1000000-0000-0000-0000-000000000005",
     },
     thursday: {
-      breakfast: "seed-overnight-oats",
-      lunch: "seed-chicken-stirfry",
-      "afternoon-snack": "seed-energy-balls",
-      dinner: "seed-lentil-soup",
+      breakfast: "a1000000-0000-0000-0000-000000000004",
+      lunch: "a1000000-0000-0000-0000-000000000001",
+      "afternoon-snack": "a1000000-0000-0000-0000-000000000006",
+      dinner: "a1000000-0000-0000-0000-000000000003",
     },
     friday: {
-      breakfast: "seed-overnight-oats",
-      "morning-snack": "seed-trail-mix",
-      lunch: "seed-pasta-bolognese",
-      "afternoon-snack": "seed-energy-balls",
-      dinner: "seed-chicken-stirfry",
+      breakfast: "a1000000-0000-0000-0000-000000000004",
+      "morning-snack": "a1000000-0000-0000-0000-000000000005",
+      lunch: "a1000000-0000-0000-0000-000000000002",
+      "afternoon-snack": "a1000000-0000-0000-0000-000000000006",
+      dinner: "a1000000-0000-0000-0000-000000000001",
     },
   };
 

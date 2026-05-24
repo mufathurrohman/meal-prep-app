@@ -96,8 +96,9 @@ export function RecipeForm({ initial, onSave, onCancel }: RecipeFormProps) {
     onSave(recipe);
   }
 
-  const inputClass =
-    "w-full px-4 py-3 rounded-xl border border-sage-200 bg-white text-sage-800 text-sm focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-transparent placeholder:text-sage-300";
+  const inputBase =
+    "px-4 py-3 rounded-xl border border-sage-200 bg-white text-sage-800 text-sm focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-transparent placeholder:text-sage-300";
+  const inputClass = `w-full ${inputBase}`;
 
   return (
     <div className="space-y-8">
@@ -143,19 +144,19 @@ export function RecipeForm({ initial, onSave, onCancel }: RecipeFormProps) {
             <div key={ing.id} className="flex gap-3 items-center">
               <input
                 type="number"
-                className={`${inputClass} w-24`}
+                className={`${inputBase} w-24`}
                 placeholder="Qty"
                 value={ing.quantity || ""}
                 onChange={(e) => updateIngredient(i, { quantity: Number(e.target.value) })}
               />
               <input
-                className={`${inputClass} w-24`}
+                className={`${inputBase} w-24`}
                 placeholder="Unit"
                 value={ing.unit}
                 onChange={(e) => updateIngredient(i, { unit: e.target.value })}
               />
               <input
-                className={`${inputClass} flex-1`}
+                className={`${inputBase} flex-1 min-w-0`}
                 placeholder="Ingredient name"
                 value={ing.name}
                 onChange={(e) => updateIngredient(i, { name: e.target.value })}
@@ -185,7 +186,7 @@ export function RecipeForm({ initial, onSave, onCancel }: RecipeFormProps) {
               <div className="flex-1 space-y-2">
                 <div className="flex gap-3">
                   <select
-                    className={`${inputClass} w-40`}
+                    className={`${inputBase} w-40`}
                     value={step.method}
                     onChange={(e) => updateStep(i, { method: e.target.value as CookingMethod })}
                   >
@@ -198,7 +199,7 @@ export function RecipeForm({ initial, onSave, onCancel }: RecipeFormProps) {
                   <div className="flex items-center gap-2">
                     <input
                       type="number"
-                      className={`${inputClass} w-24`}
+                      className={`${inputBase} w-24`}
                       placeholder="Min"
                       value={step.durationMinutes || ""}
                       onChange={(e) => updateStep(i, { durationMinutes: Number(e.target.value) })}

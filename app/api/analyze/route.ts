@@ -30,9 +30,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: "Invalid analysis type" }, { status: 400 });
   } catch (error) {
-    console.error("AI analysis error:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("AI analysis error:", message);
     return NextResponse.json(
-      { error: "Analysis failed. Check your AI provider configuration." },
+      { error: `Analysis failed: ${message}` },
       { status: 500 }
     );
   }

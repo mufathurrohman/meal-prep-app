@@ -29,14 +29,20 @@ export function WeeklyPlanGrid({ plan, recipes, onAssign }: WeeklyPlanGridProps)
         <thead>
           <tr>
             <th className="text-left text-xs font-semibold text-sage-400 uppercase tracking-wider p-3 w-40" />
-            {DAYS.map((day) => (
-              <th
-                key={day}
-                className="text-center text-xs font-semibold text-sage-600 uppercase tracking-wider p-3 w-1/5"
-              >
-                {DAY_LABELS[day]}
-              </th>
-            ))}
+            {DAYS.map((day) => {
+              const isWeekend = day === "saturday" || day === "sunday";
+              return (
+                <th
+                  key={day}
+                  className={`text-center text-xs font-semibold uppercase tracking-wider p-3 ${
+                    isWeekend ? "text-sage-400 bg-sage-50/50" : "text-sage-600"
+                  }`}
+                >
+                  {DAY_LABELS[day]}
+                  {isWeekend && <span className="block text-[9px] font-normal text-sage-300 mt-0.5">optional</span>}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -61,9 +67,10 @@ export function WeeklyPlanGrid({ plan, recipes, onAssign }: WeeklyPlanGridProps)
                   ? recipes.find((r) => r.id === slot.recipeId)
                   : null;
                 const options = isSnackSlot(slotType) ? snackRecipes : mainRecipes;
+                const isWeekend = day === "saturday" || day === "sunday";
 
                 return (
-                  <td key={day} className="p-2 align-middle">
+                  <td key={day} className={`p-2 align-middle ${isWeekend ? "bg-sage-50/40" : ""}`}>
                     <div className="relative">
                       <select
                         className={`w-full px-3 py-3 rounded-xl text-sm border-2 transition-all cursor-pointer appearance-none ${

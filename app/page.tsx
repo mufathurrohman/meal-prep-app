@@ -1,13 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useStorage } from "@/lib/storage";
 import { Recipe, WeeklyPlan } from "@/lib/types";
-import { getCurrentWeekLabel, createEmptyWeekSlots, generateId, DAYS, MEAL_SLOTS } from "@/lib/utils";
+import {
+  getCurrentWeekLabel,
+  createEmptyWeekSlots,
+  generateId,
+  DAYS,
+  MEAL_SLOTS,
+  getWeekDateSpan,
+  shiftWeek,
+} from "@/lib/utils";
 import { WeeklyPlanGrid } from "@/components/WeeklyPlanGrid";
 
 export default function MealPlanPage() {
   const storage = useStorage();
+  const [weekLabel, setWeekLabel] = useState(getCurrentWeekLabel());
   const [plan, setPlan] = useState<WeeklyPlan | null>(null);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -15,13 +24,15 @@ export default function MealPlanPage() {
   const [analysis, setAnalysis] = useState<{ gaps: string[]; nutritionNotes: string[] } | null>(null);
   const [weekNote, setWeekNote] = useState("");
 
-  const weekLabel = getCurrentWeekLabel();
+  const isCurrentWeek = weekLabel === getCurrentWeekLabel();
 
-  useEffect(() => {
-    async function load() {
+  const loadPlan = useCallback(
+    async (label: string) => {
+      setLoaded(false);
+      setAnalysis(null);
       const [r, p] = await Promise.all([
         storage.getRecipes(),
-        storage.getWeeklyPlan(weekLabel),
+        storage.getWeeklyPlan(label),
       ]);
       setRecipes(r);
 
@@ -30,16 +41,32 @@ export default function MealPlanPage() {
       } else {
         const newPlan: WeeklyPlan = {
           id: generateId(),
-          weekLabel,
+          weekLabel: label,
           slots: createEmptyWeekSlots(),
           createdAt: new Date().toISOString(),
         };
         setPlan(newPlan);
       }
       setLoaded(true);
-    }
-    load();
-  }, [storage, weekLabel]);
+    },
+    [storage]
+  );
+
+  useEffect(() => {
+    loadPlan(weekLabel);
+  }, [weekLabel, loadPlan]);
+
+  function goToPrevWeek() {
+    setWeekLabel(shiftWeek(weekLabel, -1));
+  }
+
+  function goToNextWeek() {
+    setWeekLabel(shiftWeek(weekLabel, 1));
+  }
+
+  function goToCurrentWeek() {
+    setWeekLabel(getCurrentWeekLabel());
+  }
 
   async function handleAssign(slotId: string, recipeId: string | undefined) {
     if (!plan) return;
@@ -83,6 +110,7 @@ export default function MealPlanPage() {
     return Object.entries(counts).map(([recipeId, needed]) => {
       const recipe = recipes.find((r) => r.id === recipeId);
       return {
+        recipeId,
         name: recipe?.name || "Unknown",
         needed,
         yields: recipe?.currentVersion.portionYield || 0,
@@ -111,17 +139,54 @@ export default function MealPlanPage() {
 
   return (
     <div className="space-y-10">
-      {/* Header */}
+      {/* Header with week picker */}
       <div className="flex items-end justify-between">
         <div>
           <h1 className="font-display text-3xl font-semibold text-sage-900">Weekly Meal Plan</h1>
-          <p className="text-sage-500 mt-2">
-            {weekLabel} &middot; {stats.filled} of {stats.total} slots filled
-            {stats.empty > 0 && (
-              <span className="text-warm-500 ml-1">({stats.empty} empty)</span>
+
+          {/* Week picker */}
+          <div className="flex items-center gap-3 mt-3">
+            <button
+              onClick={goToPrevWeek}
+              className="p-2 rounded-lg hover:bg-sage-100 text-sage-400 hover:text-sage-700 transition-colors"
+              title="Previous week"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M12 15L7 10L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+
+            <div className="text-center min-w-[260px]">
+              <p className="text-lg font-medium text-sage-800">{getWeekDateSpan(weekLabel)}</p>
+              <p className="text-xs text-sage-400 mt-0.5">
+                {stats.filled} of {stats.total} slots filled
+                {stats.empty > 0 && (
+                  <span className="text-warm-500 ml-1">({stats.empty} empty)</span>
+                )}
+              </p>
+            </div>
+
+            <button
+              onClick={goToNextWeek}
+              className="p-2 rounded-lg hover:bg-sage-100 text-sage-400 hover:text-sage-700 transition-colors"
+              title="Next week"
+            >
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M8 5L13 10L8 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+
+            {!isCurrentWeek && (
+              <button
+                onClick={goToCurrentWeek}
+                className="ml-2 px-3 py-1.5 text-xs font-medium text-sage-500 bg-sage-100 rounded-lg hover:bg-sage-200 transition-colors"
+              >
+                Today
+              </button>
             )}
-          </p>
+          </div>
         </div>
+
         <button
           onClick={handleAnalyze}
           disabled={analyzing}
@@ -146,7 +211,7 @@ export default function MealPlanPage() {
           ) : (
             <div className="space-y-3">
               {summary.map((item) => (
-                <div key={item.name} className="flex items-center justify-between py-2 border-b border-sage-50 last:border-0">
+                <div key={item.recipeId} className="flex items-center justify-between py-2 border-b border-sage-50 last:border-0">
                   <span className="text-sm text-sage-700 font-medium">{item.name}</span>
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-sage-500">
@@ -182,7 +247,7 @@ export default function MealPlanPage() {
         </div>
       </div>
 
-      {/* AI Analysis (shown when available) */}
+      {/* AI Analysis */}
       {analysis && (
         <div className="bg-warm-50/70 border border-warm-200 rounded-2xl p-6 shadow-sm">
           <h2 className="font-display text-lg font-semibold text-sage-800 mb-4">AI Analysis</h2>
