@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useStorage } from "@/lib/storage";
 import { Recipe, WeeklyPlan } from "@/lib/types";
 import {
@@ -24,10 +24,19 @@ export default function MealPlanPage() {
   const [analysis, setAnalysis] = useState<{ gaps: string[]; nutritionNotes: string[] } | null>(null);
   const [weekNote, setWeekNote] = useState("");
 
+  const planRef = useRef<WeeklyPlan | null>(null);
+  const noteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => { planRef.current = plan; }, [plan]);
+
   const isCurrentWeek = weekLabel === getCurrentWeekLabel();
 
   const loadPlan = useCallback(
     async (label: string) => {
+      if (noteTimerRef.current) {
+        clearTimeout(noteTimerRef.current);
+        noteTimerRef.current = null;
+      }
       setLoaded(false);
       setAnalysis(null);
       const [r, p] = await Promise.all([
@@ -58,16 +67,17 @@ export default function MealPlanPage() {
     loadPlan(weekLabel);
   }, [weekLabel, loadPlan]);
 
-  useEffect(() => {
-    if (!plan) return;
-    const t = setTimeout(async () => {
-      const updated = { ...plan, notes: weekNote || undefined };
+  function handleNoteChange(value: string) {
+    setWeekNote(value);
+    if (noteTimerRef.current) clearTimeout(noteTimerRef.current);
+    noteTimerRef.current = setTimeout(async () => {
+      const current = planRef.current;
+      if (!current) return;
+      const updated = { ...current, notes: value || undefined };
       setPlan(updated);
       await storage.saveWeeklyPlan(updated);
     }, 800);
-    return () => clearTimeout(t);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weekNote]);
+  }
 
   function goToPrevWeek() {
     setWeekLabel(shiftWeek(weekLabel, -1));
@@ -255,7 +265,7 @@ export default function MealPlanPage() {
             className="w-full h-40 px-4 py-3 rounded-xl border border-sage-200 bg-sage-50/30 text-sm text-sage-700 focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-transparent placeholder:text-sage-300 resize-none"
             placeholder="Jot down notes for this week's prep... (e.g., need to buy turmeric, try doubling the stir-fry batch, defrost chicken on Saturday night)"
             value={weekNote}
-            onChange={(e) => setWeekNote(e.target.value)}
+            onChange={(e) => handleNoteChange(e.target.value)}
           />
         </div>
       </div>

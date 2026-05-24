@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { StorageProviderWrapper } from "@/lib/storage";
 import { Nav } from "@/components/Nav";
-import { SyncBar } from "@/components/SyncBar";
 
 export const metadata: Metadata = {
   title: "Meal Prep",
@@ -17,7 +16,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="min-h-screen flex flex-col">
             <Nav />
             <main className="flex-1 max-w-[1400px] w-full mx-auto px-8 py-10">{children}</main>
-            <SyncBar />
           </div>
         </StorageProviderWrapper>
       </body>
