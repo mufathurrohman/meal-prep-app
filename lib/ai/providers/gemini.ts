@@ -98,10 +98,28 @@ ${v.cookingSteps.map((s) => `${s.order}. [${s.method}, ${s.durationMinutes}min] 
 
   prompt += `\n\nRespond with this exact JSON structure:
 {
-  "suggestions": [{ "suggestion": "short description", "rationale": "why this helps" }],
+  "suggestions": [
+    {
+      "suggestion": "short description of the change",
+      "rationale": "why this helps",
+      "suggestedChanges": {
+        "ingredients": [{ "id": "copy existing id or new unique string", "name": "...", "quantity": 0, "unit": "...", "isUncommon": false }],
+        "cookingSteps": [{ "id": "copy existing id or new unique string", "order": 1, "method": "boil|sauté|bake|roast|steam|fry|grill|simmer|stir-fry|braise|blanch|other", "description": "...", "durationMinutes": 0 }],
+        "portionYield": 0
+      }
+    }
+  ],
   "nutrientEstimate": { "caloriesPerPortion": 0, "proteinGrams": 0, "carbsGrams": 0, "fatGrams": 0 },
   "uncommonIngredients": []
-}`;
+}
+
+Rules for suggestedChanges:
+- Include it whenever the suggestion involves a concrete recipe edit: ingredient substitution, step modification, or portion change.
+- ingredients: provide the COMPLETE updated list (all ingredients, with substitutions applied). Copy the existing ingredient ids for unchanged ones; generate a new unique string id for any new ingredient.
+- cookingSteps: provide the COMPLETE updated list. Copy existing step ids for unchanged steps.
+- portionYield: include only when changing the portion count.
+- Omit suggestedChanges only for purely informational observations with no actionable recipe edit.
+- When suggesting multiple alternatives for the same ingredient or step (e.g., two different fruit substitutions), return each as a separate suggestion entry with its own suggestedChanges — the user will pick one.`;
 
   return prompt;
 }

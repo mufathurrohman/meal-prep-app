@@ -48,11 +48,6 @@ export class OpenAIProvider implements AIProvider {
   async analyzeRecipe(
     request: RecipeAnalysisRequest,
   ): Promise<RecipeAnalysisResponse> {
-    // Delegate to Anthropic provider's prompt builders for consistency
-    // In production, extract shared prompt logic to a util
-    const { default: mod } = await import("./anthropic");
-    const provider = new mod() as any;
-    // For now, just call with the same prompt structure
     const raw = await this.call(buildRecipePromptForOpenAI(request));
     return JSON.parse(raw);
   }
@@ -97,7 +92,13 @@ ${v.cookingSteps.map((s) => `${s.order}. [${s.method}, ${s.durationMinutes}min] 
   "nutrientEstimate": { "caloriesPerPortion": number, "proteinGrams": number, "carbsGrams": number, "fatGrams": number },
   "uncommonIngredients": ["..."]
 }
-Only include suggestedChanges when the suggestion involves modifying the recipe.`;
+
+Rules for suggestedChanges:
+- Include it whenever the suggestion involves a concrete recipe edit: ingredient substitution, step modification, or portion change.
+- ingredients: provide the COMPLETE updated list (all ingredients with substitutions applied). Each item: { "id": "<copy existing id or generate a new unique string>", "name": "...", "quantity": number, "unit": "...", "isUncommon": false }.
+- cookingSteps: provide the COMPLETE updated list. Each item: { "id": "<copy existing id or generate a new unique string>", "order": number, "method": "<boil|sauté|bake|roast|steam|fry|grill|simmer|stir-fry|braise|blanch|other>", "description": "...", "durationMinutes": number }.
+- portionYield: include only when the suggestion changes the portion count.
+- Omit suggestedChanges only for purely informational observations with no actionable recipe edit.`;
 
   return prompt;
 }

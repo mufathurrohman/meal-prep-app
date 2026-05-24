@@ -66,6 +66,48 @@ export default function RecipeDetailPage() {
     setCommentText("");
   }
 
+  async function handleApproveAll(newSuggestions: AISuggestion[]) {
+    if (!recipe) return;
+    const withChanges = newSuggestions.filter((s) => s.suggestedChanges);
+    if (withChanges.length === 0) return;
+
+    let mergedIngredients = recipe.currentVersion.ingredients;
+    let mergedSteps = recipe.currentVersion.cookingSteps;
+    let mergedPortionYield = recipe.currentVersion.portionYield;
+
+    for (const s of withChanges) {
+      if (s.suggestedChanges!.ingredients) mergedIngredients = s.suggestedChanges!.ingredients;
+      if (s.suggestedChanges!.cookingSteps) mergedSteps = s.suggestedChanges!.cookingSteps;
+      if (s.suggestedChanges!.portionYield) mergedPortionYield = s.suggestedChanges!.portionYield;
+    }
+
+    const newVersion: RecipeVersion = {
+      id: generateId(),
+      versionNumber: recipe.currentVersion.versionNumber + 1,
+      ingredients: mergedIngredients,
+      cookingSteps: mergedSteps,
+      portionYield: mergedPortionYield,
+      createdAt: new Date().toISOString(),
+      changeDescription: `AI: ${withChanges.map((s) => s.suggestion).join("; ")}`,
+    };
+
+    const updated: Recipe = {
+      ...recipe,
+      currentVersion: newVersion,
+      versionHistory: [...recipe.versionHistory, recipe.currentVersion],
+      updatedAt: new Date().toISOString(),
+    };
+
+    await storage.saveRecipe(updated);
+    setRecipe(updated);
+
+    for (const s of withChanges) {
+      await storage.updateSuggestionStatus(s.id, "approved");
+      await storage.saveSuggestion({ ...s, status: "approved" });
+    }
+    setSuggestions(await storage.getSuggestions(id));
+  }
+
   async function handleApprove(suggestion: AISuggestion) {
     if (!recipe) return;
     const changes = suggestion.suggestedChanges;
@@ -255,6 +297,7 @@ export default function RecipeDetailPage() {
               suggestions={suggestions}
               onApprove={handleApprove}
               onReject={handleRejectSuggestion}
+              onApproveAll={handleApproveAll}
             />
           </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Recipe, AISuggestion } from "@/lib/types";
 import { generateId } from "@/lib/utils";
 
@@ -9,13 +9,23 @@ interface AIAnalysisProps {
   suggestions: AISuggestion[];
   onApprove: (suggestion: AISuggestion) => void;
   onReject: (suggestionId: string) => void;
+  onApproveAll: (suggestions: AISuggestion[]) => Promise<void>;
 }
 
-export function AIAnalysis({ recipe, suggestions, onApprove, onReject }: AIAnalysisProps) {
+export function AIAnalysis({ recipe, suggestions, onApprove, onReject, onApproveAll }: AIAnalysisProps) {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(suggestions);
   const [error, setError] = useState<string | null>(null);
+  const [applyPrompt, setApplyPrompt] = useState<AISuggestion[] | null>(null);
+  const [selectedPromptId, setSelectedPromptId] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{ text: string; type: "success" | "info" } | null>(null);
+
+  useEffect(() => {
+    if (!notification) return;
+    const t = setTimeout(() => setNotification(null), 4000);
+    return () => clearTimeout(t);
+  }, [notification]);
 
   async function handleAnalyze() {
     if (!prompt.trim() && results.length > 0) return;
@@ -55,11 +65,39 @@ export function AIAnalysis({ recipe, suggestions, onApprove, onReject }: AIAnaly
 
       setResults((prev) => [...newSuggestions, ...prev]);
       setPrompt("");
+
+      const actionable = newSuggestions.filter((s) => s.suggestedChanges);
+      if (actionable.length > 0) {
+        setApplyPrompt(actionable);
+        setSelectedPromptId(actionable[0].id);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to analyze. Check your AI provider configuration in .env.local");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleApplyChosen() {
+    if (!applyPrompt || !selectedPromptId) return;
+    const chosen = applyPrompt.find((s) => s.id === selectedPromptId);
+    if (!chosen) return;
+    const unchosenIds = new Set(applyPrompt.filter((s) => s.id !== chosen.id).map((s) => s.id));
+    await onApproveAll([chosen]);
+    setResults((prev) =>
+      prev.map((r) => {
+        if (r.id === chosen.id) return { ...r, status: "approved" as const };
+        if (unchosenIds.has(r.id)) return { ...r, status: "rejected" as const };
+        return r;
+      })
+    );
+    setApplyPrompt(null);
+    setNotification({ text: `Recipe updated: "${chosen.suggestion}"`, type: "success" });
+  }
+
+  function handleDeclineAll() {
+    setApplyPrompt(null);
+    setNotification({ text: "Got it! You can still apply individual suggestions below.", type: "info" });
   }
 
   const pending = results.filter((s) => s.status === "pending");
@@ -89,6 +127,79 @@ export function AIAnalysis({ recipe, suggestions, onApprove, onReject }: AIAnaly
 
       {error && (
         <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+      )}
+
+      {/* Notification toast */}
+      {notification && (
+        <div
+          className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+            notification.type === "success"
+              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              : "bg-sage-50 text-sage-600 border border-sage-200"
+          }`}
+        >
+          <span>{notification.type === "success" ? "✓" : "ℹ"}</span>
+          {notification.text}
+        </div>
+      )}
+
+      {/* Apply prompt */}
+      {applyPrompt && (
+        <div className="bg-warm-50 border border-warm-300 rounded-xl p-4 space-y-3">
+          <p className="text-sm font-semibold text-sage-800">
+            {applyPrompt.length === 1
+              ? "Would you like to apply this suggestion to the recipe?"
+              : "Which improvement would you like to apply?"}
+          </p>
+
+          {/* Single suggestion — just show the title */}
+          {applyPrompt.length === 1 && (
+            <p className="text-xs text-sage-600 bg-white/70 rounded-lg px-3 py-2">
+              {applyPrompt[0].suggestion}
+            </p>
+          )}
+
+          {/* Multiple suggestions — radio list */}
+          {applyPrompt.length > 1 && (
+            <div className="space-y-2">
+              {applyPrompt.map((s) => (
+                <label
+                  key={s.id}
+                  className={`flex items-start gap-3 rounded-lg px-3 py-2.5 cursor-pointer border transition-colors ${
+                    selectedPromptId === s.id
+                      ? "bg-white border-warm-400"
+                      : "bg-white/50 border-transparent hover:bg-white/80"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="apply-suggestion"
+                    value={s.id}
+                    checked={selectedPromptId === s.id}
+                    onChange={() => setSelectedPromptId(s.id)}
+                    className="mt-0.5 accent-emerald-600 shrink-0"
+                  />
+                  <span className="text-xs text-sage-700">{s.suggestion}</span>
+                </label>
+              ))}
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleApplyChosen}
+              className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition-colors"
+            >
+              {applyPrompt.length === 1 ? "Yes, apply it" : "Apply selected"}
+            </button>
+            <button
+              onClick={handleDeclineAll}
+              className="px-4 py-2 bg-white border border-sage-200 text-sage-500 rounded-lg text-xs font-medium hover:bg-sage-50 transition-colors"
+            >
+              {applyPrompt.length === 1 ? "No, not now" : "None of these"}
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Pending suggestions */}

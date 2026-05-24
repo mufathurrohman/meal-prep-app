@@ -40,7 +40,13 @@ ${v.cookingSteps.map((s) => `${s.order}. [${s.method}, ${s.durationMinutes}min] 
   "nutrientEstimate": { "caloriesPerPortion": number, "proteinGrams": number, "carbsGrams": number, "fatGrams": number },
   "uncommonIngredients": ["..."]
 }
-Only include suggestedChanges when the suggestion involves modifying the recipe.`;
+
+Rules for suggestedChanges:
+- Include it whenever the suggestion involves a concrete recipe edit: ingredient substitution, step modification, or portion change.
+- ingredients: provide the COMPLETE updated list (all ingredients with substitutions applied). Each item: { "id": "<copy existing id or generate a new unique string>", "name": "...", "quantity": number, "unit": "...", "isUncommon": false }.
+- cookingSteps: provide the COMPLETE updated list. Each item: { "id": "<copy existing id or generate a new unique string>", "order": number, "method": "<boil|sauté|bake|roast|steam|fry|grill|simmer|stir-fry|braise|blanch|other>", "description": "...", "durationMinutes": number }.
+- portionYield: include only when the suggestion changes the portion count.
+- Omit suggestedChanges only for purely informational observations with no actionable recipe edit.`;
 
   return prompt;
 }

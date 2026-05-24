@@ -19,7 +19,7 @@ const StorageContext = createContext<StorageContextValue | null>(null);
 export function StorageProviderWrapper({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const draft = useMemo(() => (mounted ? new DraftStorageProvider() : null), [mounted]);
-  const [, setDirtyTick] = useState(0);
+  const [dirtyTick, setDirtyTick] = useState(0);
 
   useEffect(() => {
     setMounted(true);
@@ -29,11 +29,26 @@ export function StorageProviderWrapper({ children }: { children: React.ReactNode
     setDirtyTick((t) => t + 1);
   }, []);
 
+  const wrappedStorage = useMemo<StorageProvider | null>(() => {
+    if (!draft) return null;
+    return {
+      getRecipes: () => draft.getRecipes(),
+      getRecipe: (id) => draft.getRecipe(id),
+      getWeeklyPlan: (w) => draft.getWeeklyPlan(w),
+      getSuggestions: (id) => draft.getSuggestions(id),
+      saveRecipe: async (r) => { await draft.saveRecipe(r); refreshDirtyState(); },
+      deleteRecipe: async (id) => { await draft.deleteRecipe(id); refreshDirtyState(); },
+      saveWeeklyPlan: async (p) => { await draft.saveWeeklyPlan(p); refreshDirtyState(); },
+      saveSuggestion: async (s) => { await draft.saveSuggestion(s); refreshDirtyState(); },
+      updateSuggestionStatus: async (id, status) => { await draft.updateSuggestionStatus(id, status); refreshDirtyState(); },
+    };
+  }, [draft, refreshDirtyState]);
+
   const value = useMemo<StorageContextValue | null>(
     () => {
-      if (!draft) return null;
+      if (!draft || !wrappedStorage) return null;
       return {
-        storage: draft,
+        storage: wrappedStorage,
         hasDirtyChanges: () => draft.hasDirtyChanges(),
         getDirtyCounts: () => draft.getDirtyCounts(),
         commitToRemote: async () => {
@@ -53,7 +68,7 @@ export function StorageProviderWrapper({ children }: { children: React.ReactNode
         refreshDirtyState,
       };
     },
-    [draft, refreshDirtyState]
+    [draft, wrappedStorage, refreshDirtyState, dirtyTick]
   );
 
   if (!mounted || !value) {

@@ -177,7 +177,15 @@ export class SupabaseProvider implements StorageProvider {
   }
 
   async saveWeeklyPlan(plan: WeeklyPlan): Promise<void> {
-    await this.db.from("weekly_plans").upsert({
+    // Delete any existing plan for this week (cascade deletes slots)
+    await this.db.from("meal_slots").delete().eq(
+      "plan_id",
+      (await this.db.from("weekly_plans").select("id").eq("week_label", plan.weekLabel).single()).data?.id || plan.id
+    ).then(() => {});
+    await this.db.from("weekly_plans").delete().eq("week_label", plan.weekLabel);
+
+    // Insert fresh
+    await this.db.from("weekly_plans").insert({
       id: plan.id,
       week_label: plan.weekLabel,
       created_at: plan.createdAt,
